@@ -1,0 +1,8 @@
+{
+  "description": "Add ChemDraw file to Labstep",
+  "version": "1.0",
+  "menuItemText": "Labstep",
+  "minimumAPIVersion": "1.0",
+  "url": "main.html",
+  "isModalDialog": false
+  }

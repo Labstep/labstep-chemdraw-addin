@@ -1,0 +1,16 @@
+{
+  "name": "labstep-chemdraw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "labstep.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "gulp"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^4.0.1",
+    "gulp-zip": "^4.2.0"
+  }
+}

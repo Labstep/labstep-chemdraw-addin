@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="labstep.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Rubik' rel="stylesheet">
+
+    <link href='./styles.css' rel="stylesheet">
+
+    <title>Labstep Chemdraw Addin</title>
+
+    <style>
+       
+    </style>
+</head>
+
+<body>
+    <header class="App-header">
+        <div class="help-opener">
+            <img src='./logo-labstep.svg' class="App-logo" alt="logo" />
+        </div>
+        <img src='./vector.svg' class="vector" alt='vector' />
+        <div class='App-title'>Chemdraw Addin</div>
+    </header>
+    <div id="add-in-content">
+        <div id="image-preview">Please select structures from the canvas</div>
+        <form id='upload-form' class='hide'>
+            <input id='filename' class='button input' type="text" placeholder="name" />
+            <input id="send-button" class='button primary-button' type='submit' value="Send to Labstep"/>
+        </form>
+    </div>
+    <form id='login-form' class='modal'>
+        <h3>Login to Labstep</h3>
+        <div id='login-error' class='hide error'>Username / password not recognised.</div>
+        <input id='username' class='button input' type="text" placeholder="username" />
+        <input id='password' class='button input' type="password" placeholder="password" />
+        <input id='sign-in' class='button primary-button' type="submit" value="sign in" />
+    </form>
+    <div id='login-status'>
+    </div>
+    <div id='upload-success' class='hide modal'>
+        <h3>Upload Successful!</h3>
+        <button class='dismiss button primary-button'>Dismiss</button>
+    </div>
+    <div id='upload-error' class='hide modal'>
+        <h3 class='error'>Upload Error!</h3>
+        <div id='error-message'></div>
+        <button class='dismiss button primary-button'>Dismiss</button>
+    </div>
+</body>
+
+</html>
