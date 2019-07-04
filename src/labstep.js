@@ -27,7 +27,13 @@ $(function() {
       });
     }
   }
-
+  function formatSVG(svg){
+    if(!svg.match(/\<\?xml/)){
+      return '<?xml version="1.0" standalone="no" ?>'.concat(svg)
+    } else {
+      return svg
+    }
+  }
   function b64toFile(b64Data, contentType, sliceSize) {
     contentType = contentType || 'image/png';
     sliceSize = sliceSize || 512;
@@ -144,8 +150,9 @@ $(function() {
       $('#upload-form').submit(function(e) {
           e.preventDefault()
           const svg = getSVG();
+          const formattedSvg = formatSVG(svg);
           const name = $("#filename").val()
-          const file = svgToFile(svg,name)
+          const file = svgToFile(formattedSvg,name)
           uploadFile(file,function(){
             $('#upload-success').show()
           },function(message){
