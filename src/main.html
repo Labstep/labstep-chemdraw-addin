@@ -28,10 +28,10 @@
         <div class='App-title'>Chemdraw Addin</div>
     </header>
     <div id="add-in-content">
-        <div id="image-preview">Please select structures from the canvas</div>
+        <div id="image-preview">Please select a structure from the canvas</div>
         <form id='upload-form' class='hide'>
             <input id='filename' class='button input' type="text" placeholder="name" />
-            <input id="send-button" class='button primary-button' type='submit' value="Send to Labstep"/>
+            <input id="send-button" class='button primary-button' type='submit' value="Create Resource"/>
         </form>
     </div>
     <form id='login-form' class='modal'>
@@ -44,11 +44,11 @@
     <div id='login-status'>
     </div>
     <div id='upload-success' class='hide modal'>
-        <h3>Upload Successful!</h3>
+        <h3>Resource Created!</h3>
         <button class='dismiss button primary-button'>Dismiss</button>
     </div>
     <div id='upload-error' class='hide modal'>
-        <h3 class='error'>Upload Error!</h3>
+        <h3 class='error'>Error! Please contact barney@labstep for support</h3>
         <div id='error-message'></div>
         <button class='dismiss button primary-button'>Dismiss</button>
     </div>

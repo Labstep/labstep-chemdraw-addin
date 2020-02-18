@@ -34,30 +34,11 @@ $(function() {
       return svg
     }
   }
-  function b64toFile(b64Data, contentType, sliceSize) {
-    contentType = contentType || 'image/png';
-    sliceSize = sliceSize || 512;
 
-    var byteCharacters = atob(b64Data);
-    var byteArrays = [];
-
-    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-        var byteNumbers = new Array(slice.length);
-        for (var i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        var byteArray = new Uint8Array(byteNumbers);
-
-        byteArrays.push(byteArray);
-    }
-
-    var blob = new Blob(byteArrays, {type: contentType});
-    var file = new File([blob],'TestFile')
-    return file;
+  function getMol() {
+    return ChemDrawAPI.activeDocument.getMolV3000()
   }
+
   function svgToFile(svg,name){
     if(!name){
       name = 'ChemdrawFile.svg'
@@ -66,7 +47,45 @@ $(function() {
     return file
   }
 
-  function createResource(name){
+  function updatePreview(){
+    if (!ChemDrawAPI.activeDocument.selection.isEmpty()) {
+      svg = ChemDrawAPI.activeDocument.selection.getSVG();
+      // Do something with the cdxmlText and the svg image here
+      $('#image-preview').html(svg)
+    }
+  }
+
+  function newCommentMolecule(name, mol, svg, thread_id){
+    var http = new XMLHttpRequest();
+    var url = 'https://api.labstep.com/api/generic/comment';
+    http.open('POST', url, true);
+    var data = {
+      body: null,
+      comment_molecule: {
+        name: name,
+        data: mol,
+        svg: svg,
+      },
+      thread_id: thread_id
+    }
+  
+    //Send the proper header information along with the request
+    http.setRequestHeader('apikey', apikey);
+  
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if(http.readyState == 4){
+        if(http.status==200){
+          var response = JSON.parse(http.responseText)
+          onSuccess(response)
+        } else {
+          onFailure()
+        }
+      }
+    }
+    http.send(JSON.stringify(data));
+  }
+
+  function createResource(name,onSuccess,onFailure){
     var http = new XMLHttpRequest();
     var url = 'https://api.labstep.com/api/generic/resource';
     http.open('POST', url, true);
@@ -78,9 +97,41 @@ $(function() {
     http.setRequestHeader('apikey', apikey);
   
     http.onreadystatechange = function() {//Call a function when the state changes.
-      alert(http.responseText)
+      if(http.readyState == 4){
+        if(http.status==200){
+          var response = JSON.parse(http.responseText)
+          onSuccess(response)
+        } else {
+          onFailure()
+        }
+      }
     }
     http.send(JSON.stringify(data));
+  }
+
+  function uploadResourceImage(file,resource,onSuccess,onFailure){
+    var http = new XMLHttpRequest();
+    var url = 'https://api.labstep.com/api/generic/file/upload';
+    http.open('POST', url, true);
+
+    var formData = new FormData();
+    formData.append("file", file);
+    formData.append("resource_image_id",resource.id)
+    formData.append("group_id",resource.owner.id)
+  
+    //Send the proper header information along with the request
+    http.setRequestHeader('apikey', apikey);
+  
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if(http.readyState == 4){
+        if(http.status==200){
+          onSuccess()
+        } else {
+          onFailure(http.responseText)
+        }
+      }
+    }
+    http.send(formData);
   }
  
   function uploadFile(file,onSuccess,onFailure){
@@ -130,14 +181,6 @@ $(function() {
     http.send(JSON.stringify(data));
   }
 
-  function updatePreview(){
-    if (!ChemDrawAPI.activeDocument.selection.isEmpty()) {
-      svg = ChemDrawAPI.activeDocument.selection.getSVG();
-      // Do something with the cdxmlText and the svg image here
-      $('#image-preview').html(svg)
-    }
-  }
-
   $(document).ready(function() {
       resizeWindowToContent()
 
@@ -151,14 +194,16 @@ $(function() {
           e.preventDefault()
           const svg = getSVG();
           const formattedSvg = formatSVG(svg);
+          const mol = getMol();
           const name = $("#filename").val()
-          const file = svgToFile(formattedSvg,name)
-          uploadFile(file,function(){
+          createResource(name, function(resource){
+            newCommentMolecule('Molecule',mol,formattedSvg,resource.thread.id)
+            uploadResourceImage(svgToFile(formattedSvg,name),resource)
             $('#upload-success').show()
           },function(message){
             $('#upload-error').show()
             $('#error-message').html(message)
-          });
+          })
       });
 
       $('#get-image-button').click(function() {
