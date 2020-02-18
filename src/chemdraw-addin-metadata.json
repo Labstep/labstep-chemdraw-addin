@@ -1,7 +1,7 @@
 {
-  "description": "Add ChemDraw file to Labstep",
+  "description": "Creates a Resource on Labstep",
   "version": "1.0",
-  "menuItemText": "Labstep",
+  "menuItemText": "Labstep Resource Creator",
   "minimumAPIVersion": "1.0",
   "url": "main.html",
   "isModalDialog": false
