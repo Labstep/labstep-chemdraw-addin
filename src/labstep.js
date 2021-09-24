@@ -1,198 +1,181 @@
 // ESLint configuration
 /* global ChemDrawAPI, $ */
 
-$(function () {
-  if (window.ChemDrawAPI) {
-    function resizeWindowToContent() {
-      // We use a fixed width and fit to the height of our content
-      ChemDrawAPI.window.resizeTo(375, 800);
-    }
+const BUGSNAG_API_KEY = "75b38564c82dbc6abeb5f1e395b41c01";
+const LOGIN_FAILED_ERR = "Username / password not recognised.";
+const NO_GROUP_ERR = "Home workspace not found.";
 
-    function setImage(base64Image) {
-      $("#image-data").attr("src", "data:image/png;base64," + base64Image);
-      $("#image-data").on("load", function () {
-        resizeWindowToContent();
-      });
-    }
-    function getSVG() {
-      return $("#image-preview").html();
-    }
-    function getImage() {
-      return ChemDrawAPI.activeDocument.getPNGBase64Encoded({
-        transparent: true,
-        scalePercent: 100,
-        borderSizeInPixels: 0,
-      });
-    }
-  }
-  function formatSVG(svg) {
-    if (!svg.match(/\<\?xml/)) {
-      return '<?xml version="1.0" standalone="no" ?>'.concat(svg);
-    } else {
-      return svg;
-    }
-  }
-  function b64toFile(b64Data, contentType, sliceSize) {
-    contentType = contentType || "image/png";
-    sliceSize = sliceSize || 512;
-
-    var byteCharacters = atob(b64Data);
-    var byteArrays = [];
-
-    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-      var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-      var byteNumbers = new Array(slice.length);
-      for (var i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
+$(
+  (function () {
+    Bugsnag.start({
+      apiKey: BUGSNAG_API_KEY,
+      onError: function (event) {
+        // Need to manually set userAgent to a browser user agent, otherwise Bugsnag won't pick up the event
+        event.device.userAgent =
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36";
+      },
+    });
+    if (window.ChemDrawAPI) {
+      function resizeWindowToContent() {
+        // We use a fixed width and fit to the height of our content
+        ChemDrawAPI.window.resizeTo(375, 800);
       }
 
-      var byteArray = new Uint8Array(byteNumbers);
-
-      byteArrays.push(byteArray);
+      function setImage(base64Image) {
+        $("#image-data").attr("src", "data:image/png;base64," + base64Image);
+        $("#image-data").on("load", function () {
+          resizeWindowToContent();
+        });
+      }
+      function getSVG() {
+        return $("#image-preview").html();
+      }
+      function getImage() {
+        return ChemDrawAPI.activeDocument.getPNGBase64Encoded({
+          transparent: true,
+          scalePercent: 100,
+          borderSizeInPixels: 0,
+        });
+      }
+    }
+    function formatSVG(svg) {
+      if (!svg.match(/\<\?xml/)) {
+        return '<?xml version="1.0" standalone="no" ?>'.concat(svg);
+      } else {
+        return svg;
+      }
     }
 
-    var blob = new Blob(byteArrays, { type: contentType });
-    var file = new File([blob], "TestFile");
-    return file;
-  }
-  function svgToFile(svg, name) {
-    if (!name) {
-      name = "ChemdrawFile.svg";
+    function svgToFile(svg, name) {
+      if (!name) {
+        name = "ChemdrawFile.svg";
+      }
+      var file = new File([svg], `${name}.svg`, { type: "image/svg+xml" });
+      return file;
     }
-    var file = new File([svg], `${name}.svg`, { type: "image/svg+xml" });
-    return file;
-  }
 
-  function createResource(name) {
-    var http = new XMLHttpRequest();
-    var url = "https://api.labstep.com/api/generic/resource";
-    http.open("POST", url, true);
-    var data = {
-      name: name,
-    };
+    function uploadFile(file, onSuccess, onFailure) {
+      var http = new XMLHttpRequest();
+      var url = "https://api.labstep.com/api/generic/file/upload";
+      http.open("POST", url, true);
 
-    //Send the proper header information along with the request
-    http.setRequestHeader("apikey", apikey);
+      var formData = new FormData();
+      formData.append("file", file);
+      formData.append("is_external", 1);
+      formData.append("group_id", group_id);
 
-    http.onreadystatechange = function () {
-      //Call a function when the state changes.
-      alert(http.responseText);
-    };
-    http.send(JSON.stringify(data));
-  }
+      //Send the proper header information along with the request
+      http.setRequestHeader("apikey", apikey);
 
-  function uploadFile(file, onSuccess, onFailure) {
-    var http = new XMLHttpRequest();
-    var url = "https://api.labstep.com/api/generic/file/upload";
-    http.open("POST", url, true);
-
-    var formData = new FormData();
-    formData.append("file", file);
-    formData.append("is_external", 1);
-    formData.append("group_id", group_id);
-
-    //Send the proper header information along with the request
-    http.setRequestHeader("apikey", apikey);
-
-    http.onreadystatechange = function () {
-      //Call a function when the state changes.
-      if (http.readyState == 4) {
-        if (http.status == 200) {
-          onSuccess();
-        } else {
-          onFailure(http.responseText);
+      http.onreadystatechange = function () {
+        //Call a function when the state changes.
+        if (http.readyState == 4) {
+          if (http.status == 200) {
+            onSuccess();
+          } else {
+            onFailure(http.responseText);
+          }
         }
-      }
-    };
-    http.send(formData);
-  }
-
-  function login(username, password, onSuccess, onFailure) {
-    var http = new XMLHttpRequest();
-    var url = "https://api.labstep.com/public-api/user/login";
-    http.open("POST", url, true);
-    var data = {
-      username: username,
-      password: password,
-    };
-    http.setRequestHeader("Content-Type", "application/json");
-    http.onreadystatechange = function () {
-      //Call a function when the state changes.
-      if (http.readyState == 4) {
-        if (http.status == 200) {
-          var response = JSON.parse(http.responseText);
-          window.apikey = response.api_key;
-          window.group_id = response.group.id;
-          onSuccess(response);
-        } else {
-          onFailure();
-        }
-      }
-    };
-    http.send(JSON.stringify(data));
-  }
-
-  function updatePreview() {
-    if (!ChemDrawAPI.activeDocument.selection.isEmpty()) {
-      svg = ChemDrawAPI.activeDocument.selection.getSVG();
-      // Do something with the cdxmlText and the svg image here
-      $("#image-preview").html(svg);
+      };
+      http.send(formData);
     }
-  }
 
-  $(document).ready(function () {
-    resizeWindowToContent();
+    function login(username, password, onSuccess, onFailure) {
+      Bugsnag.setUser(username);
+      var http = new XMLHttpRequest();
+      var url = "https://api.labstep.com/public-api/user/login";
+      http.open("POST", url, true);
+      var data = {
+        username: username,
+        password: password,
+      };
+      http.setRequestHeader("Content-Type", "application/json");
+      http.onreadystatechange = function () {
+        // Call a function when the state changes.
+        if (http.readyState == 4) {
+          if (http.status == 200) {
+            var response = JSON.parse(http.responseText);
+            window.apikey = response.api_key;
+            if (!response.group) {
+              onFailure(NO_GROUP_ERR);
+              return;
+            }
+            window.group_id = response.group.id;
+            onSuccess(response);
+          } else {
+            onFailure(LOGIN_FAILED_ERR, http.responseText);
+          }
+        }
+      };
+      http.send(JSON.stringify(data));
+    }
 
-    updatePreview();
+    function updatePreview() {
+      if (!ChemDrawAPI.activeDocument.selection.isEmpty()) {
+        svg = ChemDrawAPI.activeDocument.selection.getSVG();
+        // Do something with the cdxmlText and the svg image here
+        $("#image-preview").html(svg);
+      }
+    }
 
-    ChemDrawAPI.activeDocument.selection.onChange(function () {
+    $(document).ready(function () {
+      resizeWindowToContent();
+
       updatePreview();
-    });
 
-    $("#upload-form").submit(function (e) {
-      e.preventDefault();
-      const svg = getSVG();
-      const formattedSvg = formatSVG(svg);
-      const name = $("#filename").val();
-      const file = svgToFile(formattedSvg, name);
-      uploadFile(
-        file,
-        function () {
-          $("#upload-success").show();
-        },
-        function (message) {
-          $("#upload-error").show();
-          $("#error-message").html(message);
-        }
-      );
-    });
+      ChemDrawAPI.activeDocument.selection.onChange(function () {
+        updatePreview();
+      });
 
-    $("#get-image-button").click(function () {
-      const image = getImage();
-      setImage(image);
-    });
+      $("#upload-form").submit(function (e) {
+        e.preventDefault();
+        const svg = getSVG();
+        const formattedSvg = formatSVG(svg);
+        const name = $("#filename").val();
+        const file = svgToFile(formattedSvg, name);
+        uploadFile(
+          file,
+          function () {
+            $("#upload-success").show();
+          },
+          function (message) {
+            Bugsnag.notify(new Error(message));
+            $("#upload-error").show();
+            $("#error-message").html(message);
+          }
+        );
+      });
 
-    $("#login-form").submit(function (e) {
-      e.preventDefault();
-      var username = $("#username").val();
-      var password = $("#password").val();
-      login(
-        username,
-        password,
-        function (user) {
-          $("#login-form").hide();
-          $("#upload-form").show();
-          $("#login-status").html(`Logged in as ${user.username}`);
-        },
-        function () {
-          $("#login-error").show();
-        }
-      );
-    });
+      $("#get-image-button").click(function () {
+        const image = getImage();
+        setImage(image);
+      });
 
-    $(".dismiss").click(function () {
-      $(".modal").hide();
+      $("#login-form").submit(function (e) {
+        e.preventDefault();
+        var username = $("#username").val();
+        var password = $("#password").val();
+        login(
+          username,
+          password,
+          function (user) {
+            $("#login-form").hide();
+            $("#upload-form").show();
+            $("#login-status").html(`Logged in as ${user.username}`);
+          },
+          function (message, error) {
+            if (error) {
+              Bugsnag.notify(new Error(error));
+            }
+            $("#login-error").show();
+            $("#login-error").html(message);
+          }
+        );
+      });
+
+      $(".dismiss").click(function () {
+        $(".modal").hide();
+      });
     });
-  });
-});
+  })()
+);

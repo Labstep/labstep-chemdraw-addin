@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://d2wy8f7a9ursnm.cloudfront.net/v7/bugsnag.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
     <script src="labstep.js"></script>
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel="stylesheet">
@@ -36,7 +37,7 @@
     </div>
     <form id='login-form' class='modal'>
         <h3>Login to Labstep</h3>
-        <div id='login-error' class='hide error'>Username / password not recognised.</div>
+        <div id='login-error' class='hide error'></div>
         <input id='username' class='button input' type="text" placeholder="username" />
         <input id='password' class='button input' type="password" placeholder="password" />
         <input id='sign-in' class='button primary-button' type="submit" value="sign in" />
