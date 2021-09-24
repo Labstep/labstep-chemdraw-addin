@@ -1,10 +1,13 @@
 // ESLint configuration
 /* global ChemDrawAPI, $ */
+const BUGSNAG_API_KEY = "75b38564c82dbc6abeb5f1e395b41c01";
+const LOGIN_FAILED_ERR = "Username / password not recognised.";
+const NO_GROUP_ERR = "Home workspace not found.";
 
 $(
   (function () {
     Bugsnag.start({
-      apiKey: "75b38564c82dbc6abeb5f1e395b41c01",
+      apiKey: BUGSNAG_API_KEY,
       onError: function (event) {
         // Need to manually set userAgent to a browser user agent, otherwise Bugsnag won't pick up the event
         event.device.userAgent =
@@ -137,10 +140,14 @@ $(
           if (http.status == 200) {
             var response = JSON.parse(http.responseText);
             window.apikey = response.api_key;
+            if (!response.group) {
+              onFailure(NO_GROUP_ERR);
+              return;
+            }
             window.group_id = response.group.id;
             onSuccess(response);
           } else {
-            onFailure(http.responseText);
+            onFailure(LOGIN_FAILED_ERR, http.responseText);
           }
         }
       };
@@ -200,9 +207,12 @@ $(
             $("#upload-form").show();
             $("#login-status").html(`Logged in as ${user.username}`);
           },
-          function (message) {
-            Bugsnag.notify(new Error(message));
+          function (message, error) {
+            if (error) {
+              Bugsnag.notify(new Error(error));
+            }
             $("#login-error").show();
+            $("#login-error").html(message);
           }
         );
       });
