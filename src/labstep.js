@@ -122,6 +122,7 @@ $(
     }
 
     function login(username, password, onSuccess, onFailure) {
+      Bugsnag.setUser(username);
       var http = new XMLHttpRequest();
       var url = "https://api.labstep.com/public-api/user/login";
       http.open("POST", url, true);
@@ -131,7 +132,7 @@ $(
       };
       http.setRequestHeader("Content-Type", "application/json");
       http.onreadystatechange = function () {
-        //Call a function when the state changes.
+        // Call a function when the state changes.
         if (http.readyState == 4) {
           if (http.status == 200) {
             var response = JSON.parse(http.responseText);
@@ -139,8 +140,7 @@ $(
             window.group_id = response.group.id;
             onSuccess(response);
           } else {
-            Bugsnag.notify(new Error("Login failed"));
-            onFailure();
+            onFailure(http.responseText);
           }
         }
       };
@@ -176,6 +176,7 @@ $(
             $("#upload-success").show();
           },
           function (message) {
+            Bugsnag.notify(new Error(message));
             $("#upload-error").show();
             $("#error-message").html(message);
           }
@@ -199,7 +200,8 @@ $(
             $("#upload-form").show();
             $("#login-status").html(`Logged in as ${user.username}`);
           },
-          function () {
+          function (message) {
+            Bugsnag.notify(new Error(message));
             $("#login-error").show();
           }
         );
